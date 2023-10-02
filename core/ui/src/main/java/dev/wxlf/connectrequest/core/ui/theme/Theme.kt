@@ -14,7 +14,9 @@ val Grey = Color(0xFFF5F5F5)
 
 private val LightColorScheme = lightColorScheme(
     primary = Blue,
-    background = Grey
+    background = Grey,
+    surface = Grey,
+    surfaceVariant = Color.White,
 )
 
 @Composable
