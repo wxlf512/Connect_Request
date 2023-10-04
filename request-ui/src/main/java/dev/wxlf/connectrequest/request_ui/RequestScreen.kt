@@ -2,8 +2,10 @@ package dev.wxlf.connectrequest.request_ui
 
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,7 +14,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -45,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.wxlf.connectrequest.core.ui.theme.ConnectRequestTheme
 import dev.wxlf.connectrequest.request_ui.ErrorOn.IDLE
@@ -76,7 +83,9 @@ fun RequestScreen(viewModel: RequestViewModel = hiltViewModel()) {
                 IDLE -> {}
                 LoadStreets -> viewModel.loadStreets()
             }
-        })
+        },
+        searchStreets = viewModel::searchStreets
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,7 +93,8 @@ fun RequestScreen(viewModel: RequestViewModel = hiltViewModel()) {
 private fun RequestScreenContent(
     uiState: RequestUiState,
     focusRequester: FocusRequester,
-    retry: () -> Unit
+    retry: () -> Unit,
+    searchStreets: (String) -> Unit
 ) {
     if (uiState.isError)
         Dialog(onDismissRequest = retry) {
@@ -124,10 +134,12 @@ private fun RequestScreenContent(
             )
         }
     ) { paddingValues ->
+        var street by remember { mutableStateOf("") }
+        var streetsMenu by remember { mutableStateOf(false) }
         Column(
             Modifier
                 .padding(paddingValues)
-                .padding(8.dp),
+                .padding(vertical = 8.dp, horizontal = 16.dp),
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -138,27 +150,18 @@ private fun RequestScreenContent(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-//                    TextField(modifier = Modifier
-//                        .fillMaxWidth()
-//                        .focusRequester(focusRequester),
-//                        value = "",
-//                        onValueChange = {},
-//                        placeholder = { Text("Выберите улицу") },
-//                        shape = MaterialTheme.shapes.small,
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.Transparent,
-//                            unfocusedContainerColor = Color.Transparent,
-//                            disabledContainerColor = Color.Transparent,
-//                        )
-//                    )
-
-                    var str by remember { mutableStateOf("") }
-                    StreetTextField(modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester),
-                        value = str,
-                        onValueChange = { str = it },
-                        placeholder = { Text("Выберите улицу") },
+                    StreetTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
+                        value = street,
+                        onValueChange = {
+                            street = it
+                            searchStreets(it)
+                            if (it.length >= 3)
+                                streetsMenu = true
+                        },
+                        placeholder = { Text(stringResource(R.string.choose_street)) },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
@@ -166,6 +169,26 @@ private fun RequestScreenContent(
                         ),
                         singleLine = true
                     )
+
+                    DropdownMenu(
+                        modifier = Modifier.background(Color.White),
+                        expanded = streetsMenu,
+                        onDismissRequest = { streetsMenu = false },
+                        properties = PopupProperties()
+                    ) {
+                        uiState.streets.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it.street) },
+                                onClick = {
+                                    street = it.street
+                                    focusManager.moveFocus(FocusDirection.Next)
+                                    streetsMenu = false
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            )
+                        }
+                    }
+
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -173,7 +196,11 @@ private fun RequestScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { /*TODO*/ },
                 enabled = false,
-                shape = RoundedCornerShape(4.dp)
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = Color(0xFFA5A5AA),
+                    disabledContentColor = Color(0xFFF5FAFA)
+                )
             ) {
                 Text(stringResource(R.string.send_button))
             }
@@ -197,7 +224,8 @@ private fun RequestPreview() {
             RequestScreenContent(
                 uiState = RequestUiState(),
                 focusRequester = FocusRequester(),
-                retry = {}
+                retry = {},
+                searchStreets = {}
             )
         }
     }

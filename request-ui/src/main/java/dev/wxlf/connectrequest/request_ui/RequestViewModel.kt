@@ -63,8 +63,10 @@ class RequestViewModel @Inject constructor(
             currentState.copy(
                 isError = false,
                 errorMsg = "",
-                streets = streets.mapToDisplayable()
-                    .filter { street -> street.street.contains(query) }
+                streets = if (query.length >= 3)
+                    streets.mapToDisplayable()
+                        .filter { street -> street.street.contains(query, true) }
+                else listOf()
             )
         }
 

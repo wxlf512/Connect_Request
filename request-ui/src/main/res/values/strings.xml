@@ -4,4 +4,5 @@
     <string name="request_title">Заявка на подключение</string>
     <string name="back">Back</string>
     <string name="send_button">Отправить</string>
+    <string name="choose_street">Выберите улицу</string>
 </resources>
