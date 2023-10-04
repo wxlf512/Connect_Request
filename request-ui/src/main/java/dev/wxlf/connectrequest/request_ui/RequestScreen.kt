@@ -20,7 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.wxlf.connectrequest.core.ui.theme.ConnectRequestTheme
 import dev.wxlf.connectrequest.request_ui.ErrorOn.IDLE
 import dev.wxlf.connectrequest.request_ui.ErrorOn.LoadStreets
+import dev.wxlf.connectrequest.request_ui.elements.StreetTextField
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -134,15 +135,37 @@ private fun RequestScreenContent(
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(8.dp)
+                        .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    TextField(modifier = Modifier
+//                    TextField(modifier = Modifier
+//                        .fillMaxWidth()
+//                        .focusRequester(focusRequester),
+//                        value = "",
+//                        onValueChange = {},
+//                        placeholder = { Text("Выберите улицу") },
+//                        shape = MaterialTheme.shapes.small,
+//                        colors = TextFieldDefaults.colors(
+//                            focusedContainerColor = Color.Transparent,
+//                            unfocusedContainerColor = Color.Transparent,
+//                            disabledContainerColor = Color.Transparent,
+//                        )
+//                    )
+
+                    var str by remember { mutableStateOf("") }
+                    StreetTextField(modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
-                        value = "",
-                        onValueChange = {},
-                        placeholder = { Text("Выберите улицу") })
+                        value = str,
+                        onValueChange = { str = it },
+                        placeholder = { Text("Выберите улицу") },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                        ),
+                        singleLine = true
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -154,6 +177,7 @@ private fun RequestScreenContent(
             ) {
                 Text(stringResource(R.string.send_button))
             }
+
         }
     }
 }

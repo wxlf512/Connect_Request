@@ -45,8 +45,16 @@ class RequestViewModel @Inject constructor(
 
     fun loadStreets() = viewModelScope.launch(defaultDispatcher) {
         statRepository.fetchAllStreets().fold(
-            onSuccess = { streets = it },
-            onFailure = { setErrorState(it.localizedMessage.orEmpty(), ErrorOn.LoadStreets) }
+            onSuccess = {
+                streets = it
+                setErrorState(isError = false, msg = "", errorOn = ErrorOn.IDLE)
+            },
+            onFailure = {
+                setErrorState(
+                    msg = it.localizedMessage.orEmpty(),
+                    errorOn = ErrorOn.LoadStreets
+                )
+            }
         )
     }
 
@@ -60,7 +68,8 @@ class RequestViewModel @Inject constructor(
             )
         }
 
-    private suspend fun setErrorState(msg: String, errorOn: ErrorOn) = withContext(defaultDispatcher) {
-        _uiState.update { it.copy(isError = true, errorMsg = msg, errorOn = errorOn) }
-    }
+    private suspend fun setErrorState(isError: Boolean = true, msg: String, errorOn: ErrorOn) =
+        withContext(defaultDispatcher) {
+            _uiState.update { it.copy(isError = isError, errorMsg = msg, errorOn = errorOn) }
+        }
 }

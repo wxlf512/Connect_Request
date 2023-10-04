@@ -54,4 +54,5 @@ dependencies {
 
     // Internet
     implementation(libs.bundles.retrofit)
+    implementation(libs.bundles.okhttp)
 }
