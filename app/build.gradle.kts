@@ -56,6 +56,7 @@ dependencies {
     // Project
     implementation(projects.core.ui)
     implementation(projects.data)
+    implementation(projects.requestUi)
 
     // Core
     implementation(libs.core.ktx)

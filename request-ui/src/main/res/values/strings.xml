@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="retry">Обновить</string>
+    <string name="request_title">Заявка на подключение</string>
+    <string name="back">Back</string>
+    <string name="send_button">Отправить</string>
+    <string name="choose_street">Выберите улицу</string>
+    <string name="choose_house">Выберите дом</string>
+    <string name="house_chooser">House chooser</string>
+    <string name="house">Дом</string>
+    <string name="house_build">Корпус</string>
+    <string name="flat">Квартира</string>
+</resources>

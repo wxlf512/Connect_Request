@@ -9,12 +9,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-val Blue = Color(0xFF3B7CB9)
+val Blue = Color(0xFF28A7E4)
 val Grey = Color(0xFFF5F5F5)
+val placeholderGrey = Color(0xFFB5B5B6)
 
 private val LightColorScheme = lightColorScheme(
     primary = Blue,
-    background = Grey
+    background = Grey,
+    surface = Grey,
+    surfaceVariant = Color.White,
+    onSurfaceVariant = placeholderGrey
 )
 
 @Composable
