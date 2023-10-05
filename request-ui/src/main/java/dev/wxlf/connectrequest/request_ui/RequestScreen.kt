@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -32,10 +31,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,6 +68,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.wxlf.connectrequest.core.ui.theme.ConnectRequestTheme
+import dev.wxlf.connectrequest.core.ui.theme.placeholderGrey
 import dev.wxlf.connectrequest.request_ui.ErrorOn.IDLE
 import dev.wxlf.connectrequest.request_ui.ErrorOn.LoadHouses
 import dev.wxlf.connectrequest.request_ui.ErrorOn.LoadStreets
@@ -195,12 +195,12 @@ private fun RequestScreenContent(
                                 if (it.length >= 3)
                                     streetsMenu = true
                             },
-                            placeholder = { Text(stringResource(R.string.choose_street)) },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                            ),
+                            placeholder = {
+                                Text(
+                                    stringResource(R.string.choose_street),
+                                    style = MaterialTheme.typography.labelLarge.copy(color = placeholderGrey)
+                                )
+                            },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             keyboardActions = KeyboardActions(onNext = {
@@ -250,11 +250,6 @@ private fun RequestScreenContent(
                                 )
                             },
                             enabled = false,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                            ),
                             singleLine = true
                         )
 
@@ -298,9 +293,17 @@ private fun RequestScreenContent(
                                 ),
                                 keyboardActions = KeyboardActions(onNext = {
                                     focusManager.moveFocus(FocusDirection.Next)
-                                })
+                                }),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                    unfocusedPlaceholderColor = placeholderGrey,
+                                    focusedPlaceholderColor = placeholderGrey,
+                                    unfocusedBorderColor = placeholderGrey
+                                )
                             )
-                            Spacer(modifier = Modifier.width(16.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             OutlinedTextField(
                                 value = houseBuildNum,
                                 onValueChange = { houseBuildNum = it },
@@ -319,9 +322,17 @@ private fun RequestScreenContent(
                                 ),
                                 keyboardActions = KeyboardActions(onNext = {
                                     focusManager.moveFocus(FocusDirection.Next)
-                                })
+                                }),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                    unfocusedPlaceholderColor = placeholderGrey,
+                                    focusedPlaceholderColor = placeholderGrey,
+                                    unfocusedBorderColor = placeholderGrey
+                                )
                             )
-                            Spacer(modifier = Modifier.width(16.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                         }
 
                         OutlinedTextField(
@@ -342,13 +353,21 @@ private fun RequestScreenContent(
                             ),
                             keyboardActions = KeyboardActions(onDone = {
                                 focusManager.clearFocus()
-                            })
+                            }),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                unfocusedPlaceholderColor = placeholderGrey,
+                                focusedPlaceholderColor = placeholderGrey,
+                                unfocusedBorderColor = placeholderGrey
+                            )
                         )
                     }
                 }
             }
             val context = LocalContext.current
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
@@ -364,11 +383,13 @@ private fun RequestScreenContent(
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                 },
                 enabled = street.isNotEmpty() && (houseChosen.isNotEmpty() || (houseNum.isNotEmpty() && houseBuildNum.isNotEmpty())) && flatNum.isNotEmpty(),
-                shape = RoundedCornerShape(4.dp),
+//                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = Color(0xFFA5A5AA),
                     disabledContentColor = Color(0xFFF5FAFA)
-                )
+                ),
+                contentPadding = PaddingValues(vertical = 12.dp)
             ) {
                 Text(stringResource(R.string.send_button), fontSize = 18.sp)
             }
