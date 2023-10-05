@@ -1,11 +1,13 @@
 package dev.wxlf.connectrequest.request_ui
 
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,6 +53,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -153,9 +156,9 @@ private fun RequestScreenContent(
         val chooseHouse = stringResource(R.string.choose_house)
         var street by rememberSaveable { mutableStateOf("") }
         var streetsMenu by rememberSaveable { mutableStateOf(false) }
-        var streetChoosedId by rememberSaveable { mutableStateOf("") }
-        var houseChoosedId by rememberSaveable { mutableStateOf("") }
-        var houseChoosed by rememberSaveable {
+        var streetChosenId by rememberSaveable { mutableStateOf("") }
+        var houseChosenId by rememberSaveable { mutableStateOf("") }
+        var houseChosen by rememberSaveable {
             mutableStateOf(chooseHouse)
         }
         var houseNum by rememberSaveable { mutableStateOf("") }
@@ -177,57 +180,59 @@ private fun RequestScreenContent(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    LowerTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        value = street,
-                        onValueChange = {
-                            street = it
-                            searchStreets(it)
-                            streetChoosedId = ""
-                            houseChoosed = chooseHouse
-                            houseChoosedId = ""
-                            if (it.length >= 3)
-                                streetsMenu = true
-                        },
-                        placeholder = { Text(stringResource(R.string.choose_street)) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = {
-                            focusManager.moveFocus(FocusDirection.Next)
-                        })
-                    )
+                    Box {
+                        LowerTextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                            value = street,
+                            onValueChange = {
+                                street = it
+                                searchStreets(it)
+                                streetChosenId = ""
+                                houseChosen = chooseHouse
+                                houseChosenId = ""
+                                if (it.length >= 3)
+                                    streetsMenu = true
+                            },
+                            placeholder = { Text(stringResource(R.string.choose_street)) },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                            ),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(onNext = {
+                                focusManager.moveFocus(FocusDirection.Next)
+                            })
+                        )
 
-                    DropdownMenu(
-                        modifier = Modifier.background(Color.White),
-                        expanded = streetsMenu,
-                        onDismissRequest = { streetsMenu = false },
-                        properties = PopupProperties()
-                    ) {
-                        uiState.streets.forEach {
-                            DropdownMenuItem(
-                                text = { Text(it.street) },
-                                onClick = {
-                                    street = it.street
-                                    focusManager.moveFocus(FocusDirection.Next)
-                                    streetsMenu = false
-                                    selectStreet(it.streetId)
-                                    streetChoosedId = it.streetId
-                                },
-                                contentPadding = PaddingValues(horizontal = 8.dp)
-                            )
+                        DropdownMenu(
+                            modifier = Modifier.background(Color.White),
+                            expanded = streetsMenu,
+                            onDismissRequest = { streetsMenu = false },
+                            properties = PopupProperties()
+                        ) {
+                            uiState.streets.forEach {
+                                DropdownMenuItem(
+                                    text = { Text(it.street) },
+                                    onClick = {
+                                        street = it.street
+                                        focusManager.moveFocus(FocusDirection.Next)
+                                        streetsMenu = false
+                                        selectStreet(it.streetId)
+                                        streetChosenId = it.streetId
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 8.dp)
+                                )
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    if (streetChoosedId.isNotEmpty()) {
+                    if (streetChosenId.isNotEmpty()) {
                         var houseMenu by rememberSaveable { mutableStateOf(false) }
                         LowerTextField(
                             modifier = Modifier
@@ -235,7 +240,7 @@ private fun RequestScreenContent(
                                 .clickable {
                                     houseMenu = !houseMenu
                                 },
-                            value = houseChoosed,
+                            value = houseChosen,
                             onValueChange = {},
                             readOnly = true,
                             trailingIcon = {
@@ -261,8 +266,8 @@ private fun RequestScreenContent(
                         ) {
                             uiState.houses.forEach {
                                 DropdownMenuItem(text = { Text(it.house) }, onClick = {
-                                    houseChoosed = it.house
-                                    houseChoosedId = it.houseId
+                                    houseChosen = it.house
+                                    houseChosenId = it.houseId
                                     houseMenu = false
                                 })
                             }
@@ -274,7 +279,7 @@ private fun RequestScreenContent(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        if (houseChoosedId.isEmpty()) {
+                        if (houseChosenId.isEmpty()) {
                             OutlinedTextField(
                                 value = houseNum,
                                 onValueChange = { houseNum = it },
@@ -287,7 +292,10 @@ private fun RequestScreenContent(
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 textStyle = TextStyle(fontSize = 14.sp),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, keyboardType = KeyboardType.Number),
+                                keyboardOptions = KeyboardOptions(
+                                    imeAction = ImeAction.Next,
+                                    keyboardType = KeyboardType.Number
+                                ),
                                 keyboardActions = KeyboardActions(onNext = {
                                     focusManager.moveFocus(FocusDirection.Next)
                                 })
@@ -305,7 +313,10 @@ private fun RequestScreenContent(
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 textStyle = TextStyle(fontSize = 14.sp),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, keyboardType = KeyboardType.Number),
+                                keyboardOptions = KeyboardOptions(
+                                    imeAction = ImeAction.Next,
+                                    keyboardType = KeyboardType.Number
+                                ),
                                 keyboardActions = KeyboardActions(onNext = {
                                     focusManager.moveFocus(FocusDirection.Next)
                                 })
@@ -325,7 +336,10 @@ private fun RequestScreenContent(
                             singleLine = true,
                             modifier = Modifier.weight(1f),
                             textStyle = TextStyle(fontSize = 14.sp),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done,
+                                keyboardType = KeyboardType.Number
+                            ),
                             keyboardActions = KeyboardActions(onDone = {
                                 focusManager.clearFocus()
                             })
@@ -333,18 +347,30 @@ private fun RequestScreenContent(
                     }
                 }
             }
+            val context = LocalContext.current
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { /*TODO*/ },
-                enabled = street.isNotEmpty() && (houseChoosed.isNotEmpty() || (houseNum.isNotEmpty() && houseBuildNum.isNotEmpty())) && flatNum.isNotEmpty(),
+                onClick = {
+                    val msg =
+                        if (streetChosenId.isNotEmpty())
+                            if (houseChosenId.isNotEmpty())
+                                "ID улицы: $streetChosenId, ID дома: $houseChosenId, Квартира: $flatNum"
+                            else
+                                "ID улицы: $streetChosenId, Дом: $houseNum, Корпус: $houseBuildNum, Квартира: $flatNum"
+                        else
+                            "Улица: $street, Дом: $houseNum, Корпус: $houseBuildNum, Квартира: $flatNum"
+
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                },
+                enabled = street.isNotEmpty() && (houseChosen.isNotEmpty() || (houseNum.isNotEmpty() && houseBuildNum.isNotEmpty())) && flatNum.isNotEmpty(),
                 shape = RoundedCornerShape(4.dp),
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = Color(0xFFA5A5AA),
                     disabledContentColor = Color(0xFFF5FAFA)
                 )
             ) {
-                Text(stringResource(R.string.send_button))
+                Text(stringResource(R.string.send_button), fontSize = 18.sp)
             }
 
         }
