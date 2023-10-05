@@ -3,16 +3,23 @@ package dev.wxlf.connectrequest.request_ui
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -22,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,17 +54,22 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.wxlf.connectrequest.core.ui.theme.ConnectRequestTheme
 import dev.wxlf.connectrequest.request_ui.ErrorOn.IDLE
+import dev.wxlf.connectrequest.request_ui.ErrorOn.LoadHouses
 import dev.wxlf.connectrequest.request_ui.ErrorOn.LoadStreets
-import dev.wxlf.connectrequest.request_ui.elements.StreetTextField
+import dev.wxlf.connectrequest.request_ui.elements.LowerTextField
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -82,9 +95,11 @@ fun RequestScreen(viewModel: RequestViewModel = hiltViewModel()) {
             when (uiState.errorOn) {
                 IDLE -> {}
                 LoadStreets -> viewModel.loadStreets()
+                LoadHouses -> viewModel.selectStreet(it)
             }
         },
-        searchStreets = viewModel::searchStreets
+        searchStreets = viewModel::searchStreets,
+        selectStreet = viewModel::selectStreet
     )
 }
 
@@ -93,11 +108,12 @@ fun RequestScreen(viewModel: RequestViewModel = hiltViewModel()) {
 private fun RequestScreenContent(
     uiState: RequestUiState,
     focusRequester: FocusRequester,
-    retry: () -> Unit,
-    searchStreets: (String) -> Unit
+    retry: (String) -> Unit,
+    searchStreets: (String) -> Unit,
+    selectStreet: (String) -> Unit
 ) {
     if (uiState.isError)
-        Dialog(onDismissRequest = retry) {
+        Dialog(onDismissRequest = { retry("") }) {
             Card {
                 Column(
                     modifier = Modifier.padding(8.dp),
@@ -105,7 +121,7 @@ private fun RequestScreenContent(
                 ) {
                     Text(uiState.errorMsg, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Button(onClick = retry) {
+                    Button(onClick = { retry("") }) {
                         Text(stringResource(R.string.retry))
                     }
                 }
@@ -134,8 +150,19 @@ private fun RequestScreenContent(
             )
         }
     ) { paddingValues ->
-        var street by remember { mutableStateOf("") }
-        var streetsMenu by remember { mutableStateOf(false) }
+        val chooseHouse = stringResource(R.string.choose_house)
+        var street by rememberSaveable { mutableStateOf("") }
+        var streetsMenu by rememberSaveable { mutableStateOf(false) }
+        var streetChoosedId by rememberSaveable { mutableStateOf("") }
+        var houseChoosedId by rememberSaveable { mutableStateOf("") }
+        var houseChoosed by rememberSaveable {
+            mutableStateOf(chooseHouse)
+        }
+        var houseNum by rememberSaveable { mutableStateOf("") }
+        var houseBuildNum by rememberSaveable { mutableStateOf("") }
+        var flatNum by rememberSaveable { mutableStateOf("") }
+
+
         Column(
             Modifier
                 .padding(paddingValues)
@@ -150,7 +177,7 @@ private fun RequestScreenContent(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    StreetTextField(
+                    LowerTextField(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester),
@@ -158,6 +185,9 @@ private fun RequestScreenContent(
                         onValueChange = {
                             street = it
                             searchStreets(it)
+                            streetChoosedId = ""
+                            houseChoosed = chooseHouse
+                            houseChoosedId = ""
                             if (it.length >= 3)
                                 streetsMenu = true
                         },
@@ -167,7 +197,11 @@ private fun RequestScreenContent(
                             unfocusedContainerColor = Color.Transparent,
                             disabledContainerColor = Color.Transparent,
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = {
+                            focusManager.moveFocus(FocusDirection.Next)
+                        })
                     )
 
                     DropdownMenu(
@@ -183,19 +217,127 @@ private fun RequestScreenContent(
                                     street = it.street
                                     focusManager.moveFocus(FocusDirection.Next)
                                     streetsMenu = false
+                                    selectStreet(it.streetId)
+                                    streetChoosedId = it.streetId
                                 },
                                 contentPadding = PaddingValues(horizontal = 8.dp)
                             )
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (streetChoosedId.isNotEmpty()) {
+                        var houseMenu by rememberSaveable { mutableStateOf(false) }
+                        LowerTextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    houseMenu = !houseMenu
+                                },
+                            value = houseChoosed,
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.ArrowDropDown,
+                                    contentDescription = stringResource(R.string.house_chooser)
+                                )
+                            },
+                            enabled = false,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                            ),
+                            singleLine = true
+                        )
+
+                        DropdownMenu(
+                            modifier = Modifier.background(Color.White),
+                            expanded = houseMenu,
+                            onDismissRequest = { houseMenu = false },
+                            properties = PopupProperties()
+                        ) {
+                            uiState.houses.forEach {
+                                DropdownMenuItem(text = { Text(it.house) }, onClick = {
+                                    houseChoosed = it.house
+                                    houseChoosedId = it.houseId
+                                    houseMenu = false
+                                })
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        if (houseChoosedId.isEmpty()) {
+                            OutlinedTextField(
+                                value = houseNum,
+                                onValueChange = { houseNum = it },
+                                placeholder = {
+                                    Text(
+                                        text = stringResource(R.string.house),
+                                        fontSize = 14.sp
+                                    )
+                                },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                textStyle = TextStyle(fontSize = 14.sp),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, keyboardType = KeyboardType.Number),
+                                keyboardActions = KeyboardActions(onNext = {
+                                    focusManager.moveFocus(FocusDirection.Next)
+                                })
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            OutlinedTextField(
+                                value = houseBuildNum,
+                                onValueChange = { houseBuildNum = it },
+                                placeholder = {
+                                    Text(
+                                        text = stringResource(R.string.house_build),
+                                        fontSize = 14.sp
+                                    )
+                                },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                textStyle = TextStyle(fontSize = 14.sp),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, keyboardType = KeyboardType.Number),
+                                keyboardActions = KeyboardActions(onNext = {
+                                    focusManager.moveFocus(FocusDirection.Next)
+                                })
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                        }
+
+                        OutlinedTextField(
+                            value = flatNum,
+                            onValueChange = { flatNum = it },
+                            placeholder = {
+                                Text(
+                                    text = stringResource(R.string.flat),
+                                    fontSize = 14.sp
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            textStyle = TextStyle(fontSize = 14.sp),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Number),
+                            keyboardActions = KeyboardActions(onDone = {
+                                focusManager.clearFocus()
+                            })
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { /*TODO*/ },
-                enabled = false,
+                enabled = street.isNotEmpty() && (houseChoosed.isNotEmpty() || (houseNum.isNotEmpty() && houseBuildNum.isNotEmpty())) && flatNum.isNotEmpty(),
                 shape = RoundedCornerShape(4.dp),
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = Color(0xFFA5A5AA),
@@ -225,7 +367,8 @@ private fun RequestPreview() {
                 uiState = RequestUiState(),
                 focusRequester = FocusRequester(),
                 retry = {},
-                searchStreets = {}
+                searchStreets = {},
+                selectStreet = {}
             )
         }
     }

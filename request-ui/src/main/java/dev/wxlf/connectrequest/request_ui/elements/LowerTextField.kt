@@ -32,7 +32,7 @@ import dev.wxlf.connectrequest.core.ui.theme.ConnectRequestTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StreetTextField(
+fun LowerTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -115,7 +115,7 @@ private fun StreetTextFieldPreview() {
             var str by remember {
                 mutableStateOf("")
             }
-            StreetTextField(
+            LowerTextField(
                 modifier = Modifier.padding(16.dp),
                 value = str,
                 onValueChange = { str = it },

@@ -24,11 +24,11 @@ data class RequestUiState(
     val errorMsg: String = "",
     val errorOn: ErrorOn = ErrorOn.IDLE,
     val streets: List<StreetDisplayableModel> = listOf(),
-    val houses: List<HouseDisplayableModel> = listOf()
+    val houses: List<HouseDisplayableModel> = listOf(),
 )
 
 enum class ErrorOn {
-    IDLE, LoadStreets
+    IDLE, LoadStreets, LoadHouses
 }
 
 @HiltViewModel
@@ -68,6 +68,32 @@ class RequestViewModel @Inject constructor(
                         .filter { street -> street.street.contains(query, true) }
                 else listOf()
             )
+        }
+
+    fun selectStreet(streetId: String) =
+        viewModelScope.launch(defaultDispatcher) {
+            val housesRes = statRepository.fetchHousesByStreetId(streetId)
+
+            withContext(defaultDispatcher) {
+                housesRes.fold(
+                    onSuccess = {
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                isError = false,
+                                errorMsg = "",
+                                houses = it.mapToDisplayable()
+                            )
+                        }
+                    },
+                    onFailure = {
+                        setErrorState(
+                            isError = true,
+                            msg = it.localizedMessage.orEmpty(),
+                            errorOn = ErrorOn.LoadHouses
+                        )
+                    }
+                )
+            }
         }
 
     private suspend fun setErrorState(isError: Boolean = true, msg: String, errorOn: ErrorOn) =
