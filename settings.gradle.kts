@@ -1,5 +1,14 @@
 @file:Suppress("UnstableApiUsage")
 
+include(":request-ui")
+
+
+include(":data")
+
+
+include(":core:ui")
+
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
